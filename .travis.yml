@@ -1,0 +1,51 @@
+sudo: required
+
+language: java
+
+services:  
+    - docker
+
+env:  
+    global:
+        - DOCKER_VERSION=1.11.2-0~trusty
+        - DOCKER_COMPOSE_VERSION=1.8.0
+        - IMAGE_NAME=node-image
+        - CLUSTER=node-cluster
+        - TASK_DEFINITION=node-task
+        - SERVICE=node-service
+        - REMOTE_IMAGE_URL=eurosasi/node-image
+before_install:  
+    # echo the docker version
+    - docker version
+    # echo the docker compose version
+    - docker-compose version
+    # list docker-engine versions
+    - apt-cache madison docker-engine
+    - sudo apt-get install jq
+
+    # upgrade docker-engine to specific version
+    - sudo apt-get -o Dpkg::Options::="--force-confnew" install --force-yes docker-engine=${DOCKER_VERSION}
+
+    # reinstall docker-compose at specific version
+    - sudo rm -f /usr/local/bin/docker-compose
+    - curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
+    - chmod +x docker-compose
+    - sudo mv docker-compose /usr/local/bin
+    - git clone https://github.com/sasikumar-sugumar/docker-deploy-scripts
+    - chmod +x docker-deploy-scripts/docker-push.sh
+    - chmod +x docker-deploy-scripts/ecs-deploy.sh
+    - chmod +x docker-deploy-scripts/ecs-push.sh
+
+before_script:
+  #- docker-compose up --build
+
+script:  
+     - docker-compose build
+
+
+    
+after_success:
+   # comment
+    - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASSWORD
+    - docker-deploy-scripts/docker-push.sh -t eurosasi/node-image -r eurosasi/node-image
+    - docker-deploy-scripts/ecs-deploy.sh
