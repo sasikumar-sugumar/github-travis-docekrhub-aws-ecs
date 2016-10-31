@@ -1,0 +1,8 @@
+version: '2'
+services:
+ node-app:
+  image: eurosasi/node-image
+  build:
+   context: .
+   dockerfile: Dockerfile
+  
